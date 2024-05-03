@@ -1,21 +1,23 @@
 <?php
 
-use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Fortify;
-use App\Http\Controllers\Auth\AuthAuthenticatedSessionController;
-use App\Http\Controllers\Auth\AuthRegisteredUserController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\AuthenticationController;
 
-
-
- 
- Route::post('/register', [AuthRegisteredUserController::class, 'store']);
- Route::post('/login', [AuthAuthenticatedSessionController::class, 'store']);
- Route::post('/logout', [AuthAuthenticatedSessionController::class, 'destroy']);
- 
-
- Route::middleware('auth:sanctum')->group(function () {
+Route::post('register', [AuthenticationController::class, 'register']);
+Route::post('login', [AuthenticationController::class, 'login']);
+Route::group([
+    "middleware" => ["auth:sanctum"]
+], function() {
+    Route::get("profile", [AuthenticationController::class, "profile"]);
+    Route::get("logout", [AuthenticationController::class, "logout"]);
     Route::apiResource('tasks', TaskController::class);
+
 });
-Route::apiResource('tasks', TaskController::class);
+
+/**
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+ */

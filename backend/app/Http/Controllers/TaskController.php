@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Task;
+use App\Http\Resources\TaskResource;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class TaskController extends Controller
@@ -13,8 +14,7 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::all();
-        return response()->json($tasks);
+        return TaskResource::collection(Task::all());
     }
 
     /**
@@ -22,79 +22,77 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'user_id' => 'required|exists:users,id',
-        ];
-
-        $validator = Validator::make($request->all(), $rules);
+        //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:50',
+            'description' => 'required',
+            'user_id' => 'required'
+        ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()->all()
+            ], 400);
         }
-
         $task = Task::create($request->all());
 
-        return response()->json($task, 201);
+        return TaskResource::make($task);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show(Task $task)
     {
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
-
-        return response()->json($task);
+        //
+        return TaskResource::make($task);
     }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Task $task)
     {
-        $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'user_id' => 'required|exists:users,id',
-        ];
-
-        $validator = Validator::make($request->all(), $rules);
+        //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:50',
+            'description' => 'required',
+            'user_id' => 'required'
+        ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()->all()
+            ], 400);
         }
-
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
-
         $task->update($request->all());
-
-        return response()->json($task, 200);
+        return TaskResource::make($task);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id) // Route binding for task by ID
+    public function destroy(Task $task)
     {
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
+        //
+        $validator = Validator::make(['task_id' => $task->id], [
+            'task_id' => 'exists:tasks,id'
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()->all()
+            ], 400);
         }
-
         $task->delete();
-        
-        return response()->json(['message' => 'Task deleted successfully!'], 204);
+        return response()->noContent();
     }
-
 }
