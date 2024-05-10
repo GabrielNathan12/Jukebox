@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -46,7 +46,15 @@ class AuthenticationController extends Controller
         }
     }
     
-    
+    public function verify(){
+        if (Auth::guard('sanctum')->check()) {
+            $user = Auth::guard('sanctum')->user();
+            return response()->json(['message' => 'Token válido', 'user' => $user], 200);
+        } else {
+            return response()->json(['message' => 'Token inválido'], 401);
+        }
+    }
+
     public function login(Request $request){
 
         $validator = Validator::make($request->all(), [
@@ -69,7 +77,8 @@ class AuthenticationController extends Controller
                 return response()->json([
                     "status" => true,
                     "message" => "User logged",
-                    "token" => $token
+                    "token" => $token,
+                    "user" => $user
                 ]);
             }
             else{
